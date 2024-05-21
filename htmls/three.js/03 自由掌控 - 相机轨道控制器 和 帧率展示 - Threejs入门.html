@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/images/logo.svg" color="#222" />
+    <title>Threejs - VCAN</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      #app {
+        height: 100vh;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/htmls/three.js/build/three.module.min.js",
+          "three/examples/": "/htmls/three.js/examples/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from 'three'
+
+      // code start
+      // 引入轨道控制器
+      import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+      // 引入Stats
+      import Stats from 'three/examples/jsm/libs/stats.module.js'
+      // code end
+
+      const $app = document.getElementById('app')
+
+      const scene = new THREE.Scene()
+      const camera = new THREE.PerspectiveCamera(
+        50,
+        window.innerWidth / window.innerHeight,
+        1,
+        1000
+      )
+      camera.position.z = 10
+
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+      })
+      
+      renderer.setSize(window.innerWidth, window.innerHeight)
+      $app.appendChild(renderer.domElement)
+
+      const boxGeo = new THREE.BoxGeometry(1, 1, 1)
+      const boxMtr = new THREE.MeshBasicMaterial()
+      const boxMesh = new THREE.Mesh(boxGeo, boxMtr)
+      scene.add(boxMesh)
+
+      // 可以控制场景 显示帧率等信息
+      // code start
+      // 创建轨道控制器, 传入需要控制的相机，和dom元素
+      new OrbitControls(camera, renderer.domElement)
+
+      // 创建stats
+      const stats = new Stats()
+      // 将stats放入页面中
+      $app.appendChild(stats.domElement)
+      // code end
+
+      function animation() {
+        // code start
+        // 实时更新stats信息
+        stats.update()
+        // code end
+
+        renderer.render(scene, camera)
+        requestAnimationFrame(animation)
+      }
+
+      animation()
+    </script>
+  </body>
+</html>

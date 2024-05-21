@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/images/logo.svg" color="#222" />
+    <title>Threejs - VCAN</title>
+
+    <link href="/htmls/libs/codemirror.min.css" rel="stylesheet" />
+    <link href="/htmls/libs/dracula.min.css" rel="stylesheet" />
+    <script src="/htmls/libs/codemirror.min.js"></script>
+    <script src="/htmls/libs/javascript.min.js"></script>
+    <script src="/htmls/libs/beautify.min.js"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      .CodeMirror {
+        height: 100vh;
+        font-size: 18px;
+      }
+      #editor,
+      #viwer {
+        width: 60%;
+        height: 100vh;
+        float: left;
+        border: 0;
+      }
+      #editor {
+        width: 40%;
+      }
+
+      ::-webkit-scrollbar {
+        width: 9px;
+        height: 9px;
+      }
+      ::-webkit-scrollbar-track {
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background-color: rgb(157, 155, 155);
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="editor"></div>
+    <iframe id="viwer"></iframe>
+
+    <script>
+      const params = new URLSearchParams(location.search)
+
+      let jsCode = ''
+      let htmlCode = `<html>
+        <style>*{margin:0; padding:0;}; #app{ height: 100vh; overflow: hidden;}<\/style>
+        <body>
+          <div style="height: 100vh;" id="app"><\/div>
+          <script type="module"><\/script><\/body>
+      <\/html>`
+      const regex = /(<script type="module">)([^<]*?)(<\/script>)/s
+
+      function pressCode() {
+        jsCode = js_beautify(jsCode, {
+          indent_size: 2, //缩进两个空格
+          space_in_empty_paren: true,
+        })
+
+        editor.setValue(jsCode)
+
+        htmlCode = htmlCode.replace(regex, `$1${jsCode}$3`)
+        const blob = new Blob([htmlCode], {
+          type: 'text/html',
+        })
+        viwer.src = URL.createObjectURL(blob)
+      }
+
+      fetch(`./${params.get('demourl')}`)
+        .then((res) => {
+          if (res.ok) {
+            return res.text()
+          } else {
+            throw new Error('请求失败')
+          }
+        })
+        .then((html) => {
+          const { protocol, host } = location
+
+          htmlCode = html.replaceAll(
+            '/htmls/three.js',
+            protocol + '//' + host + '/htmls/three.js'
+          )
+
+          const matches = htmlCode.match(regex)
+          if (matches) {
+            jsCode = matches[2]
+            jsCode = jsCode.replace(
+              /(\/\/ code start)([\s\S]*?)(\/\/ code end)/g,
+              '$1\n\n$3'
+            )
+          }
+
+          pressCode()
+        })
+        .catch((err) => {
+          console.error(err)
+          pressCode()
+        })
+
+      const editor = new CodeMirror(document.getElementById('editor'), {
+        lineNumbers: true,
+        lineWrapping: true,
+        matchBrackets: true,
+        mode: 'javascript',
+        theme: 'dracula',
+        extraKeys: {
+          'Ctrl-S': () => {
+            jsCode = editor.getValue()
+
+            pressCode()
+          },
+        },
+      })
+    </script>
+  </body>
+</html>
